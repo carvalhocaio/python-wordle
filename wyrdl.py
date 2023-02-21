@@ -19,7 +19,7 @@ def main():
         refresh_page(headline=f"Guess {idx + 1}")
         show_guesses(guesses, word)
 
-        guesses[idx] = input(f"\nGuess word: ").upper()
+        guesses[idx] = guess_word(previous_guesses=guesses[:idx])
         if guesses[idx] == word:
             break
 
@@ -33,19 +33,35 @@ def refresh_page(headline):
 
 
 def get_random_word(word_list):
-    """Get a random five-letter word from a list of strings.
-
-    ## Example:
-
-    >>> get_random_word(["snake", "worm", "it'll"])
-    'SNAKE'
-    """
-    words = [
+    if words := [
         word.upper()
         for word in word_list
         if len(word) == 5 and all(letter in ascii_letters for letter in word)
-    ]
-    return random.choice(words)
+    ]:
+        return random.choice(words)
+    else:
+        console.print("No words of length 5 in the word list", style="warning")
+        raise SystemExit()
+
+
+def guess_word(previous_guesses):
+    guess = console.input("Guess word: ").upper()
+
+    if guess in previous_guesses:
+        console.print(f"You've already guessed {guess}.", style="warning")
+        return guess_word(previous_guesses)
+
+    if len(guess) != 5:
+        console.print("Your guess must be 5 letters.", style="warning")
+        return guess_word(previous_guesses)
+
+    if any((invalid := letter) not in ascii_letters for letter in guess):
+        console.print(
+            f"Invalid letter: '{invalid}'. Please use English letters.", style="warning"
+        )
+        return guess_word(previous_guesses)
+
+    return guess
 
 
 def show_guesses(guesses, word):
@@ -77,7 +93,7 @@ def show_guesses(guesses, word):
 
 def game_over(guesses, word, guessed_correctly):
     refresh_page(headline="Game Over")
-    print(f"The word was {word}")
+    show_guesses(guesses, word)
 
     if guessed_correctly:
         console.print(f"\n[bold white on green]Correct, the word is {word}[/]")
